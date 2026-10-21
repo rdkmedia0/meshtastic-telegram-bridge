@@ -198,10 +198,11 @@ class TelegramMeshBridge:
         if key in self._seen_packets:
             return
         self._seen_packets.append(key)
-        sent_by, text = match
-        label = sent_by or node_display_name(self.hass, self.sender.gateway_num, self.entry.data[CONF_GATEWAY_ENTRY_ID])
+        _, text = match
+        # messages sent from Home Assistant go out from the gateway node, so they are shown like any mesh message
         if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
-            message = f"<b>{escape(label)}</b>: {escape(text)}"
+            name = node_display_name(self.hass, self.sender.gateway_num, self.entry.data[CONF_GATEWAY_ENTRY_ID])
+            message = f"<b>{MESH_SENDER_EMOJI} {escape(name)}</b>: {escape(text)}"
         else:
             message = escape(text)
         self._enqueue(lambda: self._async_send_telegram(message))

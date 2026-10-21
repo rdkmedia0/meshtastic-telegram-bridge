@@ -45,17 +45,8 @@ DEFAULT_PREFIX_TELEGRAM_SENDER: Final = True
 DEFAULT_PREFIX_MESH_SENDER: Final = True
 DEFAULT_LONG_MESSAGES: Final = LONG_MESSAGES_SPLIT
 
-# shown in front of the node name for messages that came over the radio
-MESH_SENDER_EMOJI: Final = "\U0001f6f0\ufe0f"
-
-# shown in front of the node name for messages that came over the radio
-MESH_SENDER_EMOJI: Final = "\U0001f6f0\ufe0f"
-
-# shown in front of the node name for messages that came over the radio
-MESH_SENDER_EMOJI: Final = "\U0001f6f0\ufe0f"
-
-# shown in front of the node name for messages that came over the radio
-MESH_SENDER_EMOJI: Final = "\U0001f6f0\ufe0f"
+# shown in front of the node name for messages that came over the mesh (satellite antenna)
+MESH_SENDER_EMOJI: Final = "\U0001f4e1"
 
 # Meshtastic text messages are limited to 200 bytes (including any prefix)
 MAX_TEXT_BYTES: Final = 200
