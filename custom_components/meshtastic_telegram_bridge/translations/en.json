@@ -1,0 +1,70 @@
+{
+  "title": "Meshtastic Telegram Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bridge a Telegram chat with the mesh",
+        "description": "Messages in the Telegram chat are sent to the mesh through the selected gateway, and messages from the mesh are posted in the chat. The chat ID must be allow-listed in the Telegram bot integration first.",
+        "data": {
+          "gateway_entry_id": "Meshtastic gateway",
+          "telegram_entry_id": "Telegram bot",
+          "chat_id": "Telegram chat ID",
+          "target_type": "Mesh target",
+          "channel_index": "Channel index",
+          "node_id": "Node"
+        },
+        "data_description": {
+          "telegram_entry_id": "Leave empty when you have a single Telegram bot.",
+          "chat_id": "The ID of the group or private chat, e.g. -1001234567890. Groups have negative IDs.",
+          "channel_index": "Index of the channel on the gateway (0 is the primary channel). Only used for a channel target.",
+          "node_id": "Meshtastic user ID (e.g. !a1b2c3d4) or node number. Only used for a node target: messages are exchanged as direct messages with this node."
+        }
+      }
+    },
+    "error": {
+      "invalid_chat_id": "The chat ID must be a number.",
+      "node_id_required": "Enter the node to exchange direct messages with.",
+      "invalid_node_id": "Enter a user ID like !a1b2c3d4 or a node number."
+    },
+    "abort": {
+      "already_configured": "This chat is already bridged with this mesh target."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bridge options",
+        "data": {
+          "direction": "Direction",
+          "prefix_telegram_sender": "Prefix mesh messages with the Telegram sender's first name",
+          "prefix_mesh_sender": "Prefix Telegram messages with the mesh node's name",
+          "long_messages": "Telegram messages longer than 200 bytes"
+        },
+        "data_description": {
+          "long_messages": "Meshtastic text messages are limited to 200 bytes including the prefix. Split sends up to 5 numbered packets."
+        }
+      }
+    }
+  },
+  "selector": {
+    "target_type": {
+      "options": {
+        "channel": "A channel of the gateway",
+        "node": "Direct messages with one node"
+      }
+    },
+    "direction": {
+      "options": {
+        "both": "Both directions",
+        "to_mesh": "Telegram to mesh only",
+        "to_telegram": "Mesh to Telegram only"
+      }
+    },
+    "long_messages": {
+      "options": {
+        "split": "Split into several packets",
+        "truncate": "Truncate"
+      }
+    }
+  }
+}
