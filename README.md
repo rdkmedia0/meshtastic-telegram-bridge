@@ -1,4 +1,4 @@
-<p align="center"><img src="brand/logo.png" alt="Meshtastic Telegram Bridge" width="520"></p>
+<p align="center"><img src="custom_components/meshtastic_telegram_bridge/brand/logo.png" alt="Meshtastic Telegram Bridge" width="520"></p>
 
 # Meshtastic Telegram Bridge
 
@@ -172,4 +172,4 @@ integration are untouched. To remove the integration's files, uninstall it in HA
 
 ## License
 
-MIT. Icon and logo in `brand/` are part of this repository and may be used to reference the integration.
+MIT. Icon and logo in `custom_components/meshtastic_telegram_bridge/brand/` are part of this repository and may be used to reference the integration.
