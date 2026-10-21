@@ -39,7 +39,8 @@ from .const import (
 from .mesh import MeshSender, MeshTarget, mesh_event_message, node_display_name, parse_node_id, split_text
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    import asyncio
+    from collections.abc import Awaitable, Callable
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import Event, HomeAssistant
@@ -65,6 +66,9 @@ class TelegramMeshBridge:
         self.sender = MeshSender(hass, entry.data[CONF_GATEWAY_ENTRY_ID])
         self._unsubscribe: list[Callable[[], None]] = []
         self._seen_packets: deque[tuple[int, Any]] = deque(maxlen=DEDUPLICATE_WINDOW)
+        # messages are forwarded one after the other, in the order they arrived
+        self._outbox: deque[Callable[[], Awaitable[None]]] = deque()
+        self._drain_task: asyncio.Task[None] | None = None
 
     @property
     def direction(self) -> str:
@@ -81,6 +85,24 @@ class TelegramMeshBridge:
         for unsubscribe in self._unsubscribe:
             unsubscribe()
         self._unsubscribe.clear()
+        self._outbox.clear()
+        if self._drain_task is not None and not self._drain_task.done():
+            self._drain_task.cancel()
+        self._drain_task = None
+
+    @callback
+    def _enqueue(self, job: Callable[[], Awaitable[None]]) -> None:
+        self._outbox.append(job)
+        if self._drain_task is None or self._drain_task.done():
+            self._drain_task = self.hass.async_create_task(self._async_drain(), name=f"{self.entry.title} forward")
+
+    async def _async_drain(self) -> None:
+        while self._outbox:
+            job = self._outbox.popleft()
+            try:
+                await job()
+            except Exception:
+                _LOGGER.exception("Unexpected error while forwarding a message")
 
     # ---------- Telegram -> mesh ----------
 
@@ -114,7 +136,7 @@ class TelegramMeshBridge:
                 self.chat_id,
                 len(dropped.encode("utf-8")),
             )
-        self.hass.async_create_task(self.sender.async_send(self.target, chunks, sent_by=f"Telegram: {name}"))
+        self._enqueue(lambda: self.sender.async_send(self.target, chunks, sent_by=f"Telegram: {name}"))
 
     # ---------- mesh -> Telegram ----------
 
@@ -142,7 +164,7 @@ class TelegramMeshBridge:
             message = f"<b>{escape(node_display_name(self.hass, from_id))}</b>: {escape(text)}"
         else:
             message = escape(text)
-        self.hass.async_create_task(self._async_send_telegram(message))
+        self._enqueue(lambda: self._async_send_telegram(message))
 
     async def _async_send_telegram(self, message: str) -> None:
         data: dict[str, Any] = {"message": message, "parse_mode": "html", "chat_id": [self.chat_id]}
