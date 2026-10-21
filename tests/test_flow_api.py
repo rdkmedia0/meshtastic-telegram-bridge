@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 async def test_user_form_is_serialised_for_the_frontend(hass: HomeAssistant, hass_client) -> None:
     MockConfigEntry(domain="meshtastic", entry_id="gateway-entry", title="Home Gateway").add_to_hass(hass)
+    MockConfigEntry(domain="telegram_bot", entry_id="telegram-entry", title="Bot").add_to_hass(hass)
     assert await async_setup_component(hass, "config", {})
     client = await hass_client()
 
@@ -27,6 +28,7 @@ async def test_user_form_is_serialised_for_the_frontend(hass: HomeAssistant, has
     assert data["type"] == "form"
     assert [field["name"] for field in data["data_schema"]] == [
         "gateway_entry_id",
+        "telegram_entry_id",
         "chat_id",
         "target_type",
         "channel_index",

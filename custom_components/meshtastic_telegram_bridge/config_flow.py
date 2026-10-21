@@ -61,12 +61,11 @@ def _user_schema(hass: HomeAssistant, defaults: dict[str, Any]) -> vol.Schema:
     fields: dict[Any, Any] = {
         vol.Required(CONF_GATEWAY_ENTRY_ID, default=defaults.get(CONF_GATEWAY_ENTRY_ID, vol.UNDEFINED)): (
             _entry_selector(hass, MESHTASTIC_DOMAIN)
-        )
-    }
-    if hass.config_entries.async_entries(TELEGRAM_DOMAIN):
-        fields[vol.Optional(CONF_TELEGRAM_ENTRY_ID, default=defaults.get(CONF_TELEGRAM_ENTRY_ID, vol.UNDEFINED))] = (
+        ),
+        vol.Required(CONF_TELEGRAM_ENTRY_ID, default=defaults.get(CONF_TELEGRAM_ENTRY_ID, vol.UNDEFINED)): (
             _entry_selector(hass, TELEGRAM_DOMAIN)
-        )
+        ),
+    }
     fields.update(
         {
             vol.Required(CONF_CHAT_ID, default=defaults.get(CONF_CHAT_ID, vol.UNDEFINED)): selector.TextSelector(),
@@ -126,7 +125,7 @@ def validate_target(user_input: dict[str, Any], errors: dict[str, str]) -> dict[
     """Normalise the user input of the user step, collecting errors per field."""
     data: dict[str, Any] = {
         CONF_GATEWAY_ENTRY_ID: user_input[CONF_GATEWAY_ENTRY_ID],
-        CONF_TELEGRAM_ENTRY_ID: user_input.get(CONF_TELEGRAM_ENTRY_ID) or None,
+        CONF_TELEGRAM_ENTRY_ID: user_input[CONF_TELEGRAM_ENTRY_ID],
         CONF_TARGET_TYPE: user_input[CONF_TARGET_TYPE],
     }
     try:
@@ -164,6 +163,8 @@ class MeshtasticTelegramBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if not self.hass.config_entries.async_entries(MESHTASTIC_DOMAIN):
             return self.async_abort(reason="no_gateway")
+        if not self.hass.config_entries.async_entries(TELEGRAM_DOMAIN):
+            return self.async_abort(reason="no_telegram_bot")
         errors: dict[str, str] = {}
         if user_input is not None:
             data = validate_target(user_input, errors)

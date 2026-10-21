@@ -36,10 +36,15 @@ def entries(hass: HomeAssistant) -> None:
     MockConfigEntry(domain="telegram_bot", entry_id="telegram-entry", title="Bot").add_to_hass(hass)
 
 
-async def test_abort_without_gateway(hass: HomeAssistant) -> None:
+async def test_abort_without_gateway_or_bot(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     assert result["type"] == "abort"
     assert result["reason"] == "no_gateway"
+
+    MockConfigEntry(domain="meshtastic", entry_id="gateway-entry", title="Home Gateway").add_to_hass(hass)
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    assert result["type"] == "abort"
+    assert result["reason"] == "no_telegram_bot"
 
 
 @pytest.mark.usefixtures("entries")
@@ -74,6 +79,7 @@ async def test_user_flow_channel(hass: HomeAssistant) -> None:
         result["flow_id"],
         user_input={
             CONF_GATEWAY_ENTRY_ID: "gateway-entry",
+            CONF_TELEGRAM_ENTRY_ID: "telegram-entry",
             CONF_CHAT_ID: "-1001234567890",
             CONF_TARGET_TYPE: "channel",
             CONF_CHANNEL_INDEX: 2,
@@ -89,7 +95,12 @@ async def test_user_flow_node_and_errors(hass: HomeAssistant) -> None:
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        user_input={CONF_GATEWAY_ENTRY_ID: "gateway-entry", CONF_CHAT_ID: "abc", CONF_TARGET_TYPE: "node"},
+        user_input={
+            CONF_GATEWAY_ENTRY_ID: "gateway-entry",
+            CONF_TELEGRAM_ENTRY_ID: "telegram-entry",
+            CONF_CHAT_ID: "abc",
+            CONF_TARGET_TYPE: "node",
+        },
     )
     assert result["type"] == "form"
     assert result["errors"] == {CONF_CHAT_ID: "invalid_chat_id", CONF_NODE_ID: "node_id_required"}
@@ -98,6 +109,7 @@ async def test_user_flow_node_and_errors(hass: HomeAssistant) -> None:
         result["flow_id"],
         user_input={
             CONF_GATEWAY_ENTRY_ID: "gateway-entry",
+            CONF_TELEGRAM_ENTRY_ID: "telegram-entry",
             CONF_CHAT_ID: "42",
             CONF_TARGET_TYPE: "node",
             CONF_NODE_ID: "!xyz",
@@ -109,6 +121,7 @@ async def test_user_flow_node_and_errors(hass: HomeAssistant) -> None:
         result["flow_id"],
         user_input={
             CONF_GATEWAY_ENTRY_ID: "gateway-entry",
+            CONF_TELEGRAM_ENTRY_ID: "telegram-entry",
             CONF_CHAT_ID: "42",
             CONF_TARGET_TYPE: "node",
             CONF_NODE_ID: str(0xA1B2C3D4),
@@ -117,4 +130,4 @@ async def test_user_flow_node_and_errors(hass: HomeAssistant) -> None:
     assert result["type"] == "create_entry"
     assert result["title"] == "Telegram 42 and node !a1b2c3d4"
     assert result["data"][CONF_NODE_ID] == "!a1b2c3d4"
-    assert result["data"][CONF_TELEGRAM_ENTRY_ID] is None
+    assert result["data"][CONF_TELEGRAM_ENTRY_ID] == "telegram-entry"

@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Bridge a Telegram chat with the mesh",
-        "description": "Messages in the Telegram chat are sent to the mesh through the selected gateway, and messages from the mesh are posted in the chat. The chat ID must be allow-listed in the Telegram bot integration first.",
+        "description": "Messages in the Telegram chat are sent to the mesh through the selected gateway, and messages from the mesh are posted in the chat. The chat ID must be allow-listed in the Telegram bot integration first: open its entry, menu, 'Add allowed chat ID'. The number shown there (negative for groups) is the chat ID to enter below.",
         "data": {
           "gateway_entry_id": "Meshtastic gateway",
           "telegram_entry_id": "Telegram bot",
@@ -14,7 +14,7 @@
           "node_id": "Node"
         },
         "data_description": {
-          "telegram_entry_id": "Leave empty when you have a single Telegram bot.",
+          "telegram_entry_id": "The Telegram bot integration that is a member of the chat.",
           "chat_id": "The ID of the group or private chat, e.g. -1001234567890. Groups have negative IDs.",
           "channel_index": "Index of the channel on the gateway (0 is the primary channel). Only used for a channel target.",
           "node_id": "Meshtastic user ID (e.g. !a1b2c3d4) or node number. Only used for a node target: messages are exchanged as direct messages with this node."
@@ -28,7 +28,8 @@
     },
     "abort": {
       "already_configured": "This chat is already bridged with this mesh target.",
-      "no_gateway": "Set up the Meshtastic integration with a gateway first."
+      "no_gateway": "Set up the Meshtastic integration with a gateway first.",
+      "no_telegram_bot": "Set up the Telegram bot integration first (Settings > Devices > Add integration > Telegram bot, platform Polling, with the token from @BotFather), add the bot to your chat and allow the chat ID there. Then add this bridge."
     }
   },
   "options": {
