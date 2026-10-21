@@ -41,19 +41,34 @@ from .mesh import parse_node_id
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
+    from homeassistant.core import HomeAssistant
 
 MAX_CHANNEL_INDEX = 7
 
 
-def _user_schema(defaults: dict[str, Any]) -> vol.Schema:
-    return vol.Schema(
+def _entry_selector(hass: HomeAssistant, domain: str) -> selector.SelectSelector:
+    """Dropdown of the config entries of an integration (the config_entry selector cannot be used in flows)."""
+    options = [
+        selector.SelectOptionDict(value=entry.entry_id, label=entry.title)
+        for entry in hass.config_entries.async_entries(domain)
+    ]
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(options=options, mode=selector.SelectSelectorMode.DROPDOWN)
+    )
+
+
+def _user_schema(hass: HomeAssistant, defaults: dict[str, Any]) -> vol.Schema:
+    fields: dict[Any, Any] = {
+        vol.Required(CONF_GATEWAY_ENTRY_ID, default=defaults.get(CONF_GATEWAY_ENTRY_ID, vol.UNDEFINED)): (
+            _entry_selector(hass, MESHTASTIC_DOMAIN)
+        )
+    }
+    if hass.config_entries.async_entries(TELEGRAM_DOMAIN):
+        fields[vol.Optional(CONF_TELEGRAM_ENTRY_ID, default=defaults.get(CONF_TELEGRAM_ENTRY_ID, vol.UNDEFINED))] = (
+            _entry_selector(hass, TELEGRAM_DOMAIN)
+        )
+    fields.update(
         {
-            vol.Required(CONF_GATEWAY_ENTRY_ID, default=defaults.get(CONF_GATEWAY_ENTRY_ID, vol.UNDEFINED)): (
-                selector.ConfigEntrySelector({"integration": MESHTASTIC_DOMAIN})
-            ),
-            vol.Optional(CONF_TELEGRAM_ENTRY_ID, default=defaults.get(CONF_TELEGRAM_ENTRY_ID, vol.UNDEFINED)): (
-                selector.ConfigEntrySelector({"integration": TELEGRAM_DOMAIN})
-            ),
             vol.Required(CONF_CHAT_ID, default=defaults.get(CONF_CHAT_ID, vol.UNDEFINED)): selector.TextSelector(),
             vol.Required(CONF_TARGET_TYPE, default=defaults.get(CONF_TARGET_TYPE, TARGET_CHANNEL)): (
                 selector.SelectSelector(
@@ -72,6 +87,7 @@ def _user_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Optional(CONF_NODE_ID, default=defaults.get(CONF_NODE_ID, vol.UNDEFINED)): selector.TextSelector(),
         }
     )
+    return vol.Schema(fields)
 
 
 def _options_schema(options: dict[str, Any]) -> vol.Schema:
@@ -146,6 +162,8 @@ class MeshtasticTelegramBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if not self.hass.config_entries.async_entries(MESHTASTIC_DOMAIN):
+            return self.async_abort(reason="no_gateway")
         errors: dict[str, str] = {}
         if user_input is not None:
             data = validate_target(user_input, errors)
@@ -154,7 +172,9 @@ class MeshtasticTelegramBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
                 title = f"Telegram {data[CONF_CHAT_ID]} and {_target_label(data)}"
                 return self.async_create_entry(title=title, data=data, options={})
-        return self.async_show_form(step_id="user", data_schema=_user_schema(user_input or {}), errors=errors)
+        return self.async_show_form(
+            step_id="user", data_schema=_user_schema(self.hass, user_input or {}), errors=errors
+        )
 
     @staticmethod
     @callback

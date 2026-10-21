@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.meshtastic_telegram_bridge.const import (
     CONF_CHANNEL_INDEX,
@@ -29,6 +30,19 @@ def no_setup():
         yield
 
 
+@pytest.fixture
+def entries(hass: HomeAssistant) -> None:
+    MockConfigEntry(domain="meshtastic", entry_id="gateway-entry", title="Home Gateway").add_to_hass(hass)
+    MockConfigEntry(domain="telegram_bot", entry_id="telegram-entry", title="Bot").add_to_hass(hass)
+
+
+async def test_abort_without_gateway(hass: HomeAssistant) -> None:
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    assert result["type"] == "abort"
+    assert result["reason"] == "no_gateway"
+
+
+@pytest.mark.usefixtures("entries")
 async def test_user_flow_channel(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     assert result["type"] == "form"
@@ -69,6 +83,7 @@ async def test_user_flow_channel(hass: HomeAssistant) -> None:
     assert result["reason"] == "already_configured"
 
 
+@pytest.mark.usefixtures("entries")
 async def test_user_flow_node_and_errors(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
 

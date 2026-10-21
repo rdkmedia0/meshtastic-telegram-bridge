@@ -27,7 +27,8 @@
       "invalid_node_id": "Enter a user ID like !a1b2c3d4 or a node number."
     },
     "abort": {
-      "already_configured": "This chat is already bridged with this mesh target."
+      "already_configured": "This chat is already bridged with this mesh target.",
+      "no_gateway": "Set up the Meshtastic integration with a gateway first."
     }
   },
   "options": {
