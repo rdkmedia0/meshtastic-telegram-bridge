@@ -6,7 +6,9 @@ A Home Assistant integration that links a Telegram chat with a Meshtastic channe
   [Meshtastic integration](https://github.com/meshtastic/home-assistant), prefixed with the sender's first name.
 - Messages sent from Home Assistant to that channel or node (the Mesh Chat panel, automations, another
   bridge) are posted too, labelled with who sent them. Requires Mesh Chat test build 4 or newer.
-- Messages received from the mesh are posted in the Telegram chat, prefixed with the node's name.
+- Messages received from the mesh are posted with a satellite emoji and the node's long name, e.g.
+  `\U0001f6f0\ufe0f Anna Hiking: on my way`. Names come from the gateway's node database, or from the device name when the
+  node is a Home Assistant device.
 - Each bridge links one chat with one channel (or one node for direct messages). Add the integration several times
   to bridge more chats.
 - With the Mesh Chat build of the Meshtastic integration, bridged messages also appear in the **Mesh Chat** panel,

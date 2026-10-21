@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -137,6 +138,12 @@ async def test_long_telegram_message_is_truncated(hass: HomeAssistant, mesh) -> 
 
 async def test_mesh_to_telegram(hass: HomeAssistant, mesh) -> None:
     entry = await setup_bridge(hass, mesh)
+    # nodes that are not Home Assistant devices are named through the gateway's node database
+    mesh.gateway.runtime_data.client = SimpleNamespace(
+        get_node_info=lambda node: SimpleNamespace(long_name="Bob Builder", short_name="BOB")
+        if node == 0x1234
+        else None
+    )
     dr.async_get(hass).async_get_or_create(
         config_entry_id=mesh.gateway.entry_id, identifiers={("meshtastic", str(ANNA))}, name="Anna <Hiking>"
     )
@@ -152,13 +159,13 @@ async def test_mesh_to_telegram(hass: HomeAssistant, mesh) -> None:
 
     assert mesh.telegram == [
         {
-            "message": "<b>Anna &lt;Hiking&gt;</b>: hello &amp; bye",
+            "message": "<b>\U0001f6f0\ufe0f Anna &lt;Hiking&gt;</b>: hello &amp; bye",
             "parse_mode": "html",
             "chat_id": [CHAT_ID],
             "config_entry_id": TELEGRAM_ENTRY,
         },
         {
-            "message": "<b>!00001234</b>: unknown node",
+            "message": "<b>\U0001f6f0\ufe0f Bob Builder</b>: unknown node",
             "parse_mode": "html",
             "chat_id": [CHAT_ID],
             "config_entry_id": TELEGRAM_ENTRY,
@@ -189,7 +196,7 @@ async def test_node_target_uses_direct_messages(hass: HomeAssistant, mesh) -> No
     assert mesh.sent == [
         {"from": str(GATEWAY), "to": str(ANNA), "text": "Alice: ping", "ack": False, "sent_by": "Telegram: Alice"}
     ]
-    assert [m["message"] for m in mesh.telegram] == ["<b>!a1b2c3d4</b>: pong"]
+    assert [m["message"] for m in mesh.telegram] == ["<b>\U0001f6f0\ufe0f !a1b2c3d4</b>: pong"]
 
 
 async def test_direction_to_mesh_only(hass: HomeAssistant, mesh) -> None:

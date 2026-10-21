@@ -33,6 +33,7 @@ from .const import (
     EVENT_MESHTASTIC_CHAT_MESSAGE_SENT,
     EVENT_MESHTASTIC_TEXT_MESSAGE,
     EVENT_TELEGRAM_TEXT,
+    MESH_SENDER_EMOJI,
     SENT_BY_PREFIX,
     TARGET_CHANNEL,
     TELEGRAM_DOMAIN,
@@ -174,7 +175,8 @@ class TelegramMeshBridge:
             self._seen_packets.append(key)
 
         if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
-            message = f"<b>{escape(node_display_name(self.hass, from_id))}</b>: {escape(text)}"
+            name = node_display_name(self.hass, from_id, self.entry.data[CONF_GATEWAY_ENTRY_ID])
+            message = f"<b>{MESH_SENDER_EMOJI} {escape(name)}</b>: {escape(text)}"
         else:
             message = escape(text)
         self._enqueue(lambda: self._async_send_telegram(message))
@@ -197,7 +199,7 @@ class TelegramMeshBridge:
             return
         self._seen_packets.append(key)
         sent_by, text = match
-        label = sent_by or node_display_name(self.hass, self.sender.gateway_num)
+        label = sent_by or node_display_name(self.hass, self.sender.gateway_num, self.entry.data[CONF_GATEWAY_ENTRY_ID])
         if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
             message = f"<b>{escape(label)}</b>: {escape(text)}"
         else:
