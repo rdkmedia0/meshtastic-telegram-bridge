@@ -9,6 +9,10 @@ DOMAIN: Final = "meshtastic_telegram_bridge"
 MESHTASTIC_DOMAIN: Final = "meshtastic"
 MESHTASTIC_SERVICE_SEND_TEXT: Final = "send_text"
 EVENT_MESHTASTIC_TEXT_MESSAGE: Final = "meshtastic_api_text_message"
+# fired by the Mesh Chat build for messages sent from Home Assistant (panel, actions, other bridges)
+EVENT_MESHTASTIC_CHAT_MESSAGE_SENT: Final = "meshtastic_chat_message_sent"
+# sent_by label this bridge puts on messages it sends to the mesh, used to avoid mirroring them back
+SENT_BY_PREFIX: Final = "Telegram: "
 
 TELEGRAM_DOMAIN: Final = "telegram_bot"
 TELEGRAM_SERVICE_SEND_MESSAGE: Final = "send_message"

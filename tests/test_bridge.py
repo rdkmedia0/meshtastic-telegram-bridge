@@ -296,3 +296,54 @@ def test_split_text_limits() -> None:
 
     with pytest.raises(ValueError, match="prefix"):
         split_text("x", "p" * 200)
+
+
+def fire_chat_sent(  # noqa: PLR0913
+    hass: HomeAssistant,
+    entry_id: str,
+    *,
+    text: str = "from the panel",
+    sent_by: str | None = "Steve Smith",
+    channel: int | None = 1,
+    to_node: int | None = None,
+    message_id: str = "m1",
+) -> None:
+    hass.bus.async_fire(
+        "meshtastic_chat_message_sent",
+        {
+            "config_entry_id": entry_id,
+            "gateway": GATEWAY,
+            "message_id": message_id,
+            "to": {"node": to_node, "channel": channel},
+            "message": text,
+            "sent_by": sent_by,
+            "status": "sent",
+        },
+    )
+
+
+async def test_messages_sent_from_home_assistant_are_mirrored(hass: HomeAssistant, mesh) -> None:
+    entry = await setup_bridge(hass, mesh)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=mesh.gateway.entry_id, identifiers={("meshtastic", str(GATEWAY))}, name="Home Gateway"
+    )
+    gateway = mesh.gateway.entry_id
+
+    fire_chat_sent(hass, gateway, message_id="1")  # from the Mesh Chat panel
+    fire_chat_sent(hass, gateway, message_id="1")  # duplicate
+    fire_chat_sent(hass, gateway, text="Alice: hi", sent_by="Telegram: Alice", message_id="2")  # our own, skipped
+    fire_chat_sent(hass, gateway, text="Bob: hi", sent_by="WhatsApp: Bob", message_id="3")  # another bridge
+    fire_chat_sent(hass, gateway, text="automation", sent_by=None, message_id="4")
+    fire_chat_sent(hass, gateway, text="other channel", channel=2, message_id="5")
+    fire_chat_sent(hass, gateway, text="direct", channel=None, to_node=ANNA, message_id="6")
+    fire_chat_sent(hass, "other-gateway", text="other gateway", message_id="7")
+    await hass.async_block_till_done()
+
+    assert [m["message"] for m in mesh.telegram] == [
+        "<b>Steve Smith</b>: from the panel",
+        "<b>WhatsApp: Bob</b>: Bob: hi",
+        "<b>Home Gateway</b>: automation",
+    ]
+    assert mesh.sent == []
+
+    assert await hass.config_entries.async_unload(entry.entry_id)

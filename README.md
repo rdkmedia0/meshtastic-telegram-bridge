@@ -4,6 +4,8 @@ A Home Assistant integration that links a Telegram chat with a Meshtastic channe
 
 - Messages written in the Telegram chat are sent to the mesh through a gateway of the
   [Meshtastic integration](https://github.com/meshtastic/home-assistant), prefixed with the sender's first name.
+- Messages sent from Home Assistant to that channel or node (the Mesh Chat panel, automations, another
+  bridge) are posted too, labelled with who sent them. Requires Mesh Chat test build 4 or newer.
 - Messages received from the mesh are posted in the Telegram chat, prefixed with the node's name.
 - Each bridge links one chat with one channel (or one node for direct messages). Add the integration several times
   to bridge more chats.

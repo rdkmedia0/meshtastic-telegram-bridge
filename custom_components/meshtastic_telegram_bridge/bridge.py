@@ -30,13 +30,23 @@ from .const import (
     DEFAULT_PREFIX_TELEGRAM_SENDER,
     DIRECTION_TO_MESH,
     DIRECTION_TO_TELEGRAM,
+    EVENT_MESHTASTIC_CHAT_MESSAGE_SENT,
     EVENT_MESHTASTIC_TEXT_MESSAGE,
     EVENT_TELEGRAM_TEXT,
+    SENT_BY_PREFIX,
     TARGET_CHANNEL,
     TELEGRAM_DOMAIN,
     TELEGRAM_SERVICE_SEND_MESSAGE,
 )
-from .mesh import MeshSender, MeshTarget, mesh_event_message, node_display_name, parse_node_id, split_text
+from .mesh import (
+    MeshSender,
+    MeshTarget,
+    chat_sent_event_message,
+    mesh_event_message,
+    node_display_name,
+    parse_node_id,
+    split_text,
+)
 
 if TYPE_CHECKING:
     import asyncio
@@ -65,7 +75,7 @@ class TelegramMeshBridge:
         self.target = target_from_entry(entry)
         self.sender = MeshSender(hass, entry.data[CONF_GATEWAY_ENTRY_ID])
         self._unsubscribe: list[Callable[[], None]] = []
-        self._seen_packets: deque[tuple[int, Any]] = deque(maxlen=DEDUPLICATE_WINDOW)
+        self._seen_packets: deque[tuple[Any, Any]] = deque(maxlen=DEDUPLICATE_WINDOW)
         # messages are forwarded one after the other, in the order they arrived
         self._outbox: deque[Callable[[], Awaitable[None]]] = deque()
         self._drain_task: asyncio.Task[None] | None = None
@@ -80,6 +90,9 @@ class TelegramMeshBridge:
             self._unsubscribe.append(self.hass.bus.async_listen(EVENT_TELEGRAM_TEXT, self._on_telegram_text))
         if self.direction != DIRECTION_TO_MESH:
             self._unsubscribe.append(self.hass.bus.async_listen(EVENT_MESHTASTIC_TEXT_MESSAGE, self._on_mesh_text))
+            self._unsubscribe.append(
+                self.hass.bus.async_listen(EVENT_MESHTASTIC_CHAT_MESSAGE_SENT, self._on_chat_message_sent)
+            )
 
     async def async_unload(self) -> None:
         for unsubscribe in self._unsubscribe:
@@ -162,6 +175,31 @@ class TelegramMeshBridge:
 
         if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
             message = f"<b>{escape(node_display_name(self.hass, from_id))}</b>: {escape(text)}"
+        else:
+            message = escape(text)
+        self._enqueue(lambda: self._async_send_telegram(message))
+
+    @callback
+    def _on_chat_message_sent(self, event: Event) -> None:
+        """Mirror messages sent from Home Assistant (the Mesh Chat panel, actions, other bridges)."""
+        if self.sender.gateway_num is None:
+            return
+        match = chat_sent_event_message(
+            event.data,
+            gateway_entry_id=self.entry.data[CONF_GATEWAY_ENTRY_ID],
+            target=self.target,
+            own_prefix=SENT_BY_PREFIX,
+        )
+        if match is None:
+            return
+        key = ("sent", event.data.get("message_id"))
+        if key in self._seen_packets:
+            return
+        self._seen_packets.append(key)
+        sent_by, text = match
+        label = sent_by or node_display_name(self.hass, self.sender.gateway_num)
+        if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
+            message = f"<b>{escape(label)}</b>: {escape(text)}"
         else:
             message = escape(text)
         self._enqueue(lambda: self._async_send_telegram(message))
