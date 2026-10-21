@@ -127,7 +127,7 @@ Open the bridge's entry → **Configure**.
 | Telegram, by Alice | (not echoed) | `Alice: text` from the gateway | `Alice: text`, labelled *Telegram: Alice* |
 | A node (Anna Hiking) | **📡 Anna Hiking**: text | | received message from Anna Hiking |
 | The Mesh Chat panel | **📡 Home Gateway**: text | `text` from the gateway | sent message |
-| A WhatsApp bridge, by Bob | **📡 Home Gateway**: Bob: text | `Bob: text` from the gateway | `Bob: text`, labelled *WhatsApp: Bob* |
+| Another bridge or automation, by Bob | **📡 Home Gateway**: Bob: text | `Bob: text` from the gateway | `Bob: text`, labelled with its `sent_by` |
 
 Names of nodes come from the gateway's node database; a name you gave the node's device in Home Assistant wins.
 
