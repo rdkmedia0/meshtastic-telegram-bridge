@@ -32,6 +32,7 @@ from .const import (
     DOMAIN,
     LONG_MESSAGES_SPLIT,
     LONG_MESSAGES_TRUNCATE,
+    MAX_CHANNEL_INDEX,
     MESHTASTIC_DOMAIN,
     TARGET_CHANNEL,
     TARGET_NODE,
@@ -42,8 +43,6 @@ from .mesh import parse_node_id
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
     from homeassistant.core import HomeAssistant
-
-MAX_CHANNEL_INDEX = 7
 
 
 def _entry_selector(hass: HomeAssistant, domain: str) -> selector.SelectSelector:

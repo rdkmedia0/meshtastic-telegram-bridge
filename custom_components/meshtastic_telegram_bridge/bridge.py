@@ -150,7 +150,7 @@ class TelegramMeshBridge:
                 self.chat_id,
                 len(dropped.encode("utf-8")),
             )
-        self._enqueue(lambda: self.sender.async_send(self.target, chunks, sent_by=f"Telegram: {name}"))
+        self._enqueue(lambda: self.sender.async_send(self.target, chunks, sent_by=f"{SENT_BY_PREFIX}{name}"))
 
     # ---------- mesh -> Telegram ----------
 
@@ -174,11 +174,7 @@ class TelegramMeshBridge:
                 return
             self._seen_packets.append(key)
 
-        if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
-            name = node_display_name(self.hass, from_id, self.entry.data[CONF_GATEWAY_ENTRY_ID])
-            message = f"<b>{MESH_SENDER_EMOJI} {escape(name)}</b>: {escape(text)}"
-        else:
-            message = escape(text)
+        message = self._telegram_html(from_id, text)
         self._enqueue(lambda: self._async_send_telegram(message))
 
     @callback
@@ -200,12 +196,15 @@ class TelegramMeshBridge:
         self._seen_packets.append(key)
         _, text = match
         # messages sent from Home Assistant go out from the gateway node, so they are shown like any mesh message
-        if self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
-            name = node_display_name(self.hass, self.sender.gateway_num, self.entry.data[CONF_GATEWAY_ENTRY_ID])
-            message = f"<b>{MESH_SENDER_EMOJI} {escape(name)}</b>: {escape(text)}"
-        else:
-            message = escape(text)
+        message = self._telegram_html(self.sender.gateway_num, text)
         self._enqueue(lambda: self._async_send_telegram(message))
+
+    def _telegram_html(self, from_id: int, text: str) -> str:
+        """Format a mesh message for Telegram: the sender's name in bold (when enabled) and the escaped text."""
+        if not self.entry.options.get(CONF_PREFIX_MESH_SENDER, DEFAULT_PREFIX_MESH_SENDER):
+            return escape(text)
+        name = node_display_name(self.hass, from_id, self.entry.data[CONF_GATEWAY_ENTRY_ID])
+        return f"<b>{MESH_SENDER_EMOJI} {escape(name)}</b>: {escape(text)}"
 
     async def _async_send_telegram(self, message: str) -> None:
         data: dict[str, Any] = {"message": message, "parse_mode": "html", "chat_id": [self.chat_id]}

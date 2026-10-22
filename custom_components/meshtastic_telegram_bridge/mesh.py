@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-BROADCAST_NUM = 0xFFFFFFFF
 _CHUNK_SUFFIX_BYTES = len(b" [9/9]")
 _ELLIPSIS = "..."
 

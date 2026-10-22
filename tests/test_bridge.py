@@ -341,7 +341,7 @@ async def test_messages_sent_from_home_assistant_are_mirrored(hass: HomeAssistan
     fire_chat_sent(hass, gateway, message_id="1")  # from the Mesh Chat panel
     fire_chat_sent(hass, gateway, message_id="1")  # duplicate
     fire_chat_sent(hass, gateway, text="Alice: hi", sent_by="Telegram: Alice", message_id="2")  # our own, skipped
-    fire_chat_sent(hass, gateway, text="Bob: hi", sent_by="WhatsApp: Bob", message_id="3")  # another bridge
+    fire_chat_sent(hass, gateway, text="Bob: hi", sent_by="Matrix: Bob", message_id="3")  # another bridge
     fire_chat_sent(hass, gateway, text="automation", sent_by=None, message_id="4")
     fire_chat_sent(hass, gateway, text="Steve S.: prefixed", prefix="Steve S.", message_id="4b")
     fire_chat_sent(hass, gateway, text="other channel", channel=2, message_id="5")

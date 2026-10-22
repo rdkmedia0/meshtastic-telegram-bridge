@@ -48,6 +48,9 @@ DEFAULT_LONG_MESSAGES: Final = LONG_MESSAGES_SPLIT
 # shown in front of the node name for messages that came over the mesh (satellite antenna)
 MESH_SENDER_EMOJI: Final = "\U0001f4e1"
 
+# a gateway has eight channel slots, 0 to 7
+MAX_CHANNEL_INDEX: Final = 7
+
 # Meshtastic text messages are limited to 200 bytes (including any prefix)
 MAX_TEXT_BYTES: Final = 200
 # never send more than this many packets for one Telegram message, LoRa airtime is precious
